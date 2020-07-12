@@ -16,3 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+
+Route::get('page/show/{id}','PageController@showOne')->where('id','[0-9]+');
+Route::get('/pages/all/','PageController@showAll');
