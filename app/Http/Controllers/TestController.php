@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 
 class TestController extends Controller
 {
-	public function show()
+	public function sum($numOne,$numTwo)
 	{
-		return 'TestController';
+		return $numOne + $numTwo;
 	}
 }

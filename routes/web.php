@@ -13,10 +13,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+
+Route::group(['prefix' => '/'], function () {
+ 	Route::get('', 'IndexController@indexAction');
+ 	Route::get('about', 'IndexController@aboutAction');
+ 	Route::get('contact', 'IndexController@contactAction');
+ 	Route::get('post', 'IndexController@postAction');
+    Route::post('result', 'IndexController@result');
 });
-
-
-Route::get('page/show/{id}','PageController@showOne')->where('id','[0-9]+');
-Route::get('/pages/all/','PageController@showAll');
+Route::group(['prefix' => '/session'], function () {
+    Route::get('', 'SessionController@sessionAction');
+});
