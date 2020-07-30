@@ -6,8 +6,18 @@ use Illuminate\Http\Request;
 use App\Post;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\PostRequest;
+use Illuminate\Support\Facades\Auth;
+
+
 class PostController extends Controller
 {
+    public function __construct() 
+    {   
+        
+        // если не авторизованный пользователь юзает методы (кроме except) его перенаправляют на индекс
+        $this->middleware('auth')->except('posts.index');
+    }
     /**
      * Display a listing of the resource.
      *
@@ -47,14 +57,14 @@ class PostController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(PostRequest $request)
     {   
         // объект модели пост
         $post = new Post();
         $post->title = $request->title;
         $post->short_title = Str::length($request->title) > 30 ? Str::substr($request->title, 0, 30) . '...' : $request->title;
         $post->description = $request->description;
-        $post->author_id = 1;
+        $post->author_id = auth()->user()->id;
         // проверяем была ли картинка
         if($request->file('img')) {
             $path = storage::putFile('public',$request->file('img'));
@@ -80,6 +90,11 @@ class PostController extends Controller
     {
         $post = Post::Join('users', 'author_id', '=', 'users.id')
                 ->find($id);
+            
+                if(!$post) {
+                    return redirect()->route('post.index')->withErrors('Вы не можете редактировать данный пост')
+                        ->withErrors('Ты куда-то не туда пошел');
+                }
         return view('posts.show', compact('post'));
     }
 
@@ -92,6 +107,16 @@ class PostController extends Controller
     public function edit($id)
     {
         $post = Post::find($id);
+
+        if(!$post) {
+            return redirect()->route('post.index')->withErrors('Вы не можете редактировать данный пост')
+                ->withErrors('Ты куда-то не туда пошел');
+        }
+
+        if($post->author_id != \Auth::user()->id) {
+            return redirect()->route('post.index')->withErrors('Вы не можете редактировать данный пост');
+        }
+
         return view('posts.edit', compact('post'));
     }
 
@@ -102,9 +127,16 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(PostRequest $request, $id)
     {
         $post = Post::find($id);
+        if(!$post) {
+            return redirect()->route('post.index')->withErrors('Вы не можете редактировать данный пост')
+                ->withErrors('Ты куда-то не туда пошел');
+        }
+        if($post->author_id != \Auth::user()->id) {
+            return redirect()->route('post.index')->withErrors('Вы не можете редактировать данный пост');
+        }
         $post->title = $request->title;
         $post->short_title = Str::length($request->title) > 30 ? Str::substr($request->title, 0, 30) . '...' : $request->title;
         $post->description = $request->description;
@@ -130,6 +162,13 @@ class PostController extends Controller
     public function destroy($id)
     {
         $post = Post::find($id);
+        if(!$post) {
+            return redirect()->route('post.index')->withErrors('Вы не можете редактировать данный пост')
+                ->withErrors('Ты куда-то не туда пошел');
+        }
+        if($post->author_id != \Auth::user()->id) {
+            return redirect()->route('post.index')->withErrors('Вы не можете редактировать данный пост');
+        }
         $post->delete();
         return redirect()->route('post.index')->with('success', 'Пост удален');
     }
